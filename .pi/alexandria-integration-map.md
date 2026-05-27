@@ -62,6 +62,7 @@ Read behavior:
 
 - Accept relative vault paths only.
 - Reject absolute paths, `..`, and paths escaping vault root.
+- Block `arquivo/` by policy.
 - Default max chars: 12,000.
 
 ## Phase 2 tools: safe writes
@@ -73,7 +74,7 @@ Implemented after read-only smoke tests:
 | `alexandria_create_note` | Create/overwrite standardized markdown note | blocks secret-looking content |
 | `alexandria_append_training_record` | Append sanitized JSONL record for PI Composer dataset | schema validation + secret guard |
 
-Secret guard should block at minimum:
+Secret guard blocks at minimum:
 
 - private keys
 - GitHub tokens
@@ -83,6 +84,12 @@ Secret guard should block at minimum:
 - `.env`-style assignments with high-entropy values
 
 Never print blocked secret values; report only pattern category and field/path.
+
+Additional hardening implemented:
+
+- Max sizes for note title/body/tags.
+- Max sizes for training-record fields.
+- Per-tool audit trail persisted in Pi session (`customType: alexandria_audit`) without note body content.
 
 ## Skill design
 

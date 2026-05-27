@@ -25,10 +25,11 @@ Write tools:
 1. Search before creating new notes, ADRs, runbooks, skills, or training plans.
 2. Read the most relevant notes before proposing a pattern or decision.
 3. Prefer relative vault paths from `alexandria_search` results.
-4. Never store, repeat, or expose secrets, tokens, credentials, private keys, or raw `.env` values.
-5. If a result says content was redacted, do not ask to reveal the redacted value.
-6. For PI Composer training examples, use only sanitized context, plan, result, and validation.
-7. Use write tools only after reviewing the content for sensitive data.
+4. Avoid blocked policy paths such as `arquivo/`.
+5. Never store, repeat, or expose secrets, tokens, credentials, private keys, or raw `.env` values.
+6. If a result says content was redacted, do not ask to reveal the redacted value.
+7. For PI Composer training examples, use only sanitized context, plan, result, and validation.
+8. Use write tools only after reviewing the content for sensitive data.
 
 ## Search strategy
 

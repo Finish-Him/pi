@@ -97,6 +97,17 @@ function formatTrainingRecord(result: AppendTrainingRecordResult): string {
 	return `Training record appended: ${result.path}\nBytes appended: ${result.bytesAppended}`;
 }
 
+type AuditOutcome = "ok" | "error";
+
+function audit(pi: ExtensionAPI, tool: string, outcome: AuditOutcome, details: Record<string, unknown>): void {
+	pi.appendEntry("alexandria_audit", {
+		timestamp: new Date().toISOString(),
+		tool,
+		outcome,
+		details,
+	});
+}
+
 export default function alexandriaExtension(pi: ExtensionAPI) {
 	pi.registerCommand("alexandria", {
 		description: "Show Alexandria vault status",
@@ -122,11 +133,17 @@ export default function alexandriaExtension(pi: ExtensionAPI) {
 		],
 		parameters: EMPTY_PARAMS,
 		async execute() {
-			const status = await getVaultStatus();
-			return {
-				content: [{ type: "text", text: formatStatus(status) }],
-				details: status,
-			};
+			try {
+				const status = await getVaultStatus();
+				audit(pi, "alexandria_status", "ok", { ok: status.ok, markdownCount: status.markdownCount });
+				return {
+					content: [{ type: "text", text: formatStatus(status) }],
+					details: status,
+				};
+			} catch (error) {
+				audit(pi, "alexandria_status", "error", { message: error instanceof Error ? error.message : String(error) });
+				throw error;
+			}
 		},
 		renderCall(_args, theme) {
 			return new Text(theme.fg("toolTitle", theme.bold("alexandria_status")), 0, 0);
@@ -156,11 +173,24 @@ export default function alexandriaExtension(pi: ExtensionAPI) {
 		],
 		parameters: SEARCH_PARAMS,
 		async execute(_toolCallId, params: SearchParams) {
-			const results = await searchVault(params.query, params.limit);
-			return {
-				content: [{ type: "text", text: formatSearchResults(params.query, results) }],
-				details: { query: params.query, limit: params.limit, results },
-			};
+			try {
+				const results = await searchVault(params.query, params.limit);
+				audit(pi, "alexandria_search", "ok", {
+					queryLength: params.query.length,
+					limit: params.limit ?? null,
+					resultCount: results.length,
+				});
+				return {
+					content: [{ type: "text", text: formatSearchResults(params.query, results) }],
+					details: { query: params.query, limit: params.limit, results },
+				};
+			} catch (error) {
+				audit(pi, "alexandria_search", "error", {
+					queryLength: params.query.length,
+					message: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		renderCall(args, theme) {
 			return new Text(
@@ -188,11 +218,24 @@ export default function alexandriaExtension(pi: ExtensionAPI) {
 		],
 		parameters: READ_NOTE_PARAMS,
 		async execute(_toolCallId, params: ReadNoteParams) {
-			const result = await readNote(params.path, params.maxChars);
-			return {
-				content: [{ type: "text", text: formatReadNote(result) }],
-				details: result,
-			};
+			try {
+				const result = await readNote(params.path, params.maxChars);
+				audit(pi, "alexandria_read_note", "ok", {
+					path: result.path,
+					charsRead: result.charsRead,
+					truncated: result.truncated,
+				});
+				return {
+					content: [{ type: "text", text: formatReadNote(result) }],
+					details: result,
+				};
+			} catch (error) {
+				audit(pi, "alexandria_read_note", "error", {
+					path: params.path,
+					message: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		renderCall(args, theme) {
 			return new Text(theme.fg("toolTitle", theme.bold("alexandria_read_note ")) + theme.fg("accent", args.path), 0, 0);
@@ -219,11 +262,24 @@ export default function alexandriaExtension(pi: ExtensionAPI) {
 		],
 		parameters: CREATE_NOTE_PARAMS,
 		async execute(_toolCallId, params: CreateNoteParams) {
-			const result = await createNote(params);
-			return {
-				content: [{ type: "text", text: formatCreateNote(result) }],
-				details: result,
-			};
+			try {
+				const result = await createNote(params);
+				audit(pi, "alexandria_create_note", "ok", {
+					path: result.path,
+					overwritten: result.overwritten,
+					bytes: result.bytes,
+				});
+				return {
+					content: [{ type: "text", text: formatCreateNote(result) }],
+					details: result,
+				};
+			} catch (error) {
+				audit(pi, "alexandria_create_note", "error", {
+					path: params.path,
+					message: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		renderCall(args, theme) {
 			return new Text(theme.fg("toolTitle", theme.bold("alexandria_create_note ")) + theme.fg("accent", args.path), 0, 0);
@@ -247,11 +303,24 @@ export default function alexandriaExtension(pi: ExtensionAPI) {
 		],
 		parameters: APPEND_TRAINING_RECORD_PARAMS,
 		async execute(_toolCallId, params: AppendTrainingRecordParams) {
-			const result = await appendTrainingRecord(params);
-			return {
-				content: [{ type: "text", text: formatTrainingRecord(result) }],
-				details: result,
-			};
+			try {
+				const result = await appendTrainingRecord(params);
+				audit(pi, "alexandria_append_training_record", "ok", {
+					path: result.path,
+					bytesAppended: result.bytesAppended,
+					taskLength: params.task.length,
+				});
+				return {
+					content: [{ type: "text", text: formatTrainingRecord(result) }],
+					details: result,
+				};
+			} catch (error) {
+				audit(pi, "alexandria_append_training_record", "error", {
+					taskLength: params.task.length,
+					message: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		renderCall(_args, theme) {
 			return new Text(theme.fg("toolTitle", theme.bold("alexandria_append_training_record")), 0, 0);

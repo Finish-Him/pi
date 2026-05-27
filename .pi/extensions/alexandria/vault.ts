@@ -9,6 +9,12 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 50;
 const MAX_SEARCH_FILE_BYTES = 2 * 1024 * 1024;
 const SNIPPET_RADIUS = 180;
+const MAX_NOTE_BODY_CHARS = 80_000;
+const MAX_NOTE_TITLE_CHARS = 180;
+const MAX_NOTE_TAGS = 24;
+const MAX_TAG_CHARS = 40;
+const MAX_TRAINING_FIELD_CHARS = 12_000;
+const BLOCKED_PATH_PREFIXES = ["arquivo/"];
 
 const ALLOWED_NOTE_TYPES = new Set(["moc", "daily", "infra", "projeto", "sei", "meta", "adr", "template", "dataset", "runbook"]);
 
@@ -21,6 +27,7 @@ const IGNORED_DIRECTORIES = new Set([
 	"build",
 	"coverage",
 	"__pycache__",
+	"arquivo",
 ]);
 
 export type VaultStatus = {
@@ -106,10 +113,24 @@ function ensureInsideVault(vaultRoot: string, candidatePath: string): string {
 	return resolvedCandidate;
 }
 
+function normalizeRelativePath(path: string): string {
+	return path.replaceAll("\\", "/").replace(/^\.\//, "").trim();
+}
+
+function assertPathPolicy(relativePath: string): void {
+	const normalized = normalizeRelativePath(relativePath).toLowerCase();
+	for (const prefix of BLOCKED_PATH_PREFIXES) {
+		if (normalized === prefix.slice(0, -1) || normalized.startsWith(prefix)) {
+			throw new Error(`Path is blocked by policy: ${prefix}`);
+		}
+	}
+}
+
 export function resolveVaultRelativePath(relativePath: string): string {
 	const cleaned = relativePath.trim().replace(/^@+/, "");
 	if (!cleaned) throw new Error("Note path is required");
 	if (isAbsolute(cleaned)) throw new Error("Use a relative Alexandria note path");
+	assertPathPolicy(cleaned);
 
 	const vaultRoot = getVaultRoot();
 	return ensureInsideVault(vaultRoot, resolve(vaultRoot, cleaned));
@@ -195,13 +216,29 @@ function normalizeTags(tags: string[]): string[] {
 }
 
 function validateNoteInput(input: CreateNoteInput): void {
-	if (!input.title.trim()) throw new Error("Note title is required");
-	if (!input.body.trim()) throw new Error("Note body is required");
+	const title = input.title.trim();
+	const body = input.body.trim();
+	if (!title) throw new Error("Note title is required");
+	if (!body) throw new Error("Note body is required");
+	if (title.length > MAX_NOTE_TITLE_CHARS) {
+		throw new Error(`Note title too long. Max ${MAX_NOTE_TITLE_CHARS} characters`);
+	}
+	if (body.length > MAX_NOTE_BODY_CHARS) {
+		throw new Error(`Note body too long. Max ${MAX_NOTE_BODY_CHARS} characters`);
+	}
 	if (!ALLOWED_NOTE_TYPES.has(input.tipo)) {
 		throw new Error(`Invalid note tipo: ${input.tipo}`);
 	}
 	if (extname(input.path).toLowerCase() !== ".md") {
 		throw new Error("Note path must end with .md");
+	}
+	if (input.tags.length > MAX_NOTE_TAGS) {
+		throw new Error(`Too many tags. Max ${MAX_NOTE_TAGS}`);
+	}
+	for (const tag of input.tags) {
+		if (tag.trim().length > MAX_TAG_CHARS) {
+			throw new Error(`Tag too long. Max ${MAX_TAG_CHARS} characters`);
+		}
 	}
 	assertNoSecrets(JSON.stringify(input), "Alexandria note input");
 }
@@ -266,10 +303,22 @@ function buildTrainingRecord(input: AppendTrainingRecordInput): unknown {
 	};
 }
 
+function assertMaxFieldLength(label: string, value: string | undefined): void {
+	if (!value) return;
+	if (value.length > MAX_TRAINING_FIELD_CHARS) {
+		throw new Error(`${label} too long. Max ${MAX_TRAINING_FIELD_CHARS} characters`);
+	}
+}
+
 function validateTrainingInput(input: AppendTrainingRecordInput): void {
 	if (input.task.trim().length < 20) throw new Error("Training task must have at least 20 characters");
 	if (input.plan.trim().length < 40) throw new Error("Training plan must have at least 40 characters");
 	if (input.result.trim().length < 20) throw new Error("Training result must have at least 20 characters");
+	assertMaxFieldLength("task", input.task.trim());
+	assertMaxFieldLength("context", input.context?.trim());
+	assertMaxFieldLength("plan", input.plan.trim());
+	assertMaxFieldLength("result", input.result.trim());
+	assertMaxFieldLength("validation", input.validation?.trim());
 	assertNoSecrets(JSON.stringify(input), "Training record input");
 }
 
