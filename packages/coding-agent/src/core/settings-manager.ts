@@ -58,6 +58,7 @@ export interface WarningSettings {
 }
 
 export type TransportSetting = Transport;
+export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 
 /**
  * Package source for npm/git packages.
@@ -78,7 +79,7 @@ export interface Settings {
 	lastChangelogVersion?: string;
 	defaultProvider?: string;
 	defaultModel?: string;
-	defaultThinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
+	defaultThinkingLevel?: ThinkingLevel;
 	transport?: TransportSetting; // default: "auto"
 	steeringMode?: "all" | "one-at-a-time";
 	followUpMode?: "all" | "one-at-a-time";
@@ -153,6 +154,27 @@ function parseTimeoutSetting(value: unknown, settingName: string): number | unde
 	}
 	if (value !== undefined) {
 		throw new Error(`Invalid ${settingName} setting: ${String(value)}`);
+	}
+	return undefined;
+}
+
+function asNonNegativeInteger(value: unknown): number | undefined {
+	if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+		return undefined;
+	}
+	return Math.floor(value);
+}
+
+function parseThinkingLevel(value: unknown): ThinkingLevel | undefined {
+	if (
+		value === "off" ||
+		value === "minimal" ||
+		value === "low" ||
+		value === "medium" ||
+		value === "high" ||
+		value === "xhigh"
+	) {
+		return value;
 	}
 	return undefined;
 }
@@ -652,11 +674,11 @@ export class SettingsManager {
 		this.save();
 	}
 
-	getDefaultThinkingLevel(): "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | undefined {
-		return this.settings.defaultThinkingLevel;
+	getDefaultThinkingLevel(): ThinkingLevel | undefined {
+		return parseThinkingLevel(this.settings.defaultThinkingLevel);
 	}
 
-	setDefaultThinkingLevel(level: "off" | "minimal" | "low" | "medium" | "high" | "xhigh"): void {
+	setDefaultThinkingLevel(level: ThinkingLevel): void {
 		this.globalSettings.defaultThinkingLevel = level;
 		this.markModified("defaultThinkingLevel");
 		this.save();
@@ -728,8 +750,8 @@ export class SettingsManager {
 	getRetrySettings(): { enabled: boolean; maxRetries: number; baseDelayMs: number } {
 		return {
 			enabled: this.getRetryEnabled(),
-			maxRetries: this.settings.retry?.maxRetries ?? 3,
-			baseDelayMs: this.settings.retry?.baseDelayMs ?? 2000,
+			maxRetries: asNonNegativeInteger(this.settings.retry?.maxRetries) ?? 3,
+			baseDelayMs: asNonNegativeInteger(this.settings.retry?.baseDelayMs) ?? 2000,
 		};
 	}
 
@@ -748,9 +770,9 @@ export class SettingsManager {
 
 	getProviderRetrySettings(): { timeoutMs?: number; maxRetries?: number; maxRetryDelayMs: number } {
 		return {
-			timeoutMs: this.settings.retry?.provider?.timeoutMs,
-			maxRetries: this.settings.retry?.provider?.maxRetries,
-			maxRetryDelayMs: this.settings.retry?.provider?.maxRetryDelayMs ?? 60000,
+			timeoutMs: asNonNegativeInteger(this.settings.retry?.provider?.timeoutMs),
+			maxRetries: asNonNegativeInteger(this.settings.retry?.provider?.maxRetries),
+			maxRetryDelayMs: asNonNegativeInteger(this.settings.retry?.provider?.maxRetryDelayMs) ?? 60000,
 		};
 	}
 

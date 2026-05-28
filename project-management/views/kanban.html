@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Kanban de Tarefas</title>
+	<style>
+		:root { color-scheme: light dark; }
+		body { font-family: Inter, Segoe UI, Arial, sans-serif; margin: 0; padding: 20px; background: #0f172a; color: #e2e8f0; }
+		h1 { margin: 0 0 8px; }
+		.meta { opacity: 0.85; margin-bottom: 18px; font-size: 14px; }
+		.board { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 12px; }
+		.column { background: #111827; border: 1px solid #334155; border-radius: 10px; min-height: 220px; }
+		.column > header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 700; border-bottom: 1px solid #334155; }
+		.column > header span { background: #1f2937; border: 1px solid #334155; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+		.cards { padding: 10px; display: grid; gap: 8px; }
+		.card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; }
+		.card h3 { margin: 0 0 6px; font-size: 15px; }
+		.card ul { margin: 0; padding-left: 16px; font-size: 13px; line-height: 1.45; }
+		.empty { opacity: 0.7; margin: 4px 2px; }
+		@media (max-width: 1200px) { .board { grid-template-columns: repeat(2, minmax(240px, 1fr)); } }
+		@media (max-width: 700px) { .board { grid-template-columns: 1fr; } }
+	</style>
+</head>
+<body>
+	<h1>Kanban de Tarefas (MD → HTML)</h1>
+	<div class="meta">Gerado em: 2026-05-28T00:14:10.500Z | Fonte: <code>project-management/tasks/*.md</code></div>
+	<div class="board">
+			<section class="column">
+				<header>To Do <span>1</span></header>
+				<div class="cards">
+		<article class="card">
+			<h3>Template de tarefa</h3>
+			<ul>
+				<li><strong>Projeto:</strong> pi</li>
+				<li><strong>Owner:</strong> time</li>
+				<li><strong>Prioridade:</strong> P2</li>
+				<li><strong>Checklist:</strong> 0/6</li>
+				<li><strong>Atualizado:</strong> 2026-05-27</li>
+				<li><strong>Arquivo:</strong> template-task.md</li>
+			</ul>
+		</article>
+	</div>
+			</section>
+		
+
+			<section class="column">
+				<header>In Progress <span>0</span></header>
+				<div class="cards"><p class="empty">Sem tarefas</p></div>
+			</section>
+		
+
+			<section class="column">
+				<header>Blocked <span>0</span></header>
+				<div class="cards"><p class="empty">Sem tarefas</p></div>
+			</section>
+		
+
+			<section class="column">
+				<header>Done <span>2</span></header>
+				<div class="cards">
+		<article class="card">
+			<h3>MVP Kanban HTML a partir de Markdown</h3>
+			<ul>
+				<li><strong>Projeto:</strong> pi</li>
+				<li><strong>Owner:</strong> moises</li>
+				<li><strong>Prioridade:</strong> P2</li>
+				<li><strong>Checklist:</strong> 4/4</li>
+				<li><strong>Atualizado:</strong> 2026-05-27</li>
+				<li><strong>Arquivo:</strong> 2026-05-27-kanban-mvp.md</li>
+			</ul>
+		</article>
+	
+
+		<article class="card">
+			<h3>Sanitizar settings de retry e thinking level</h3>
+			<ul>
+				<li><strong>Projeto:</strong> pi</li>
+				<li><strong>Owner:</strong> moises</li>
+				<li><strong>Prioridade:</strong> P1</li>
+				<li><strong>Checklist:</strong> 5/5</li>
+				<li><strong>Atualizado:</strong> 2026-05-27</li>
+				<li><strong>Arquivo:</strong> 2026-05-27-settings-sanitization.md</li>
+			</ul>
+		</article>
+	</div>
+			</section>
+		</div>
+</body>
+</html>
