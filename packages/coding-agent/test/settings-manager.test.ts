@@ -340,4 +340,73 @@ describe("SettingsManager", () => {
 			expect(manager.getSessionDir()).toBe(join(homedir(), "sessions"));
 		});
 	});
+
+	describe("retry settings sanitization", () => {
+		it("should fall back to defaults when retry settings are invalid", () => {
+			writeFileSync(
+				join(agentDir, "settings.json"),
+				JSON.stringify({
+					retry: {
+						maxRetries: -1,
+						baseDelayMs: Number.NaN,
+					},
+				}),
+			);
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getRetrySettings()).toEqual({
+				enabled: true,
+				maxRetries: 3,
+				baseDelayMs: 2000,
+			});
+		});
+
+		it("should sanitize provider retry settings", () => {
+			writeFileSync(
+				join(agentDir, "settings.json"),
+				JSON.stringify({
+					retry: {
+						provider: {
+							timeoutMs: -100,
+							maxRetries: 2.7,
+							maxRetryDelayMs: Number.POSITIVE_INFINITY,
+						},
+					},
+				}),
+			);
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getProviderRetrySettings()).toEqual({
+				timeoutMs: undefined,
+				maxRetries: 2,
+				maxRetryDelayMs: 60000,
+			});
+		});
+	});
+
+	describe("defaultThinkingLevel sanitization", () => {
+		it("should ignore invalid defaultThinkingLevel in settings file", () => {
+			writeFileSync(
+				join(agentDir, "settings.json"),
+				JSON.stringify({
+					defaultThinkingLevel: "ultra",
+				}),
+			);
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getDefaultThinkingLevel()).toBeUndefined();
+		});
+
+		it("should keep valid defaultThinkingLevel in settings file", () => {
+			writeFileSync(
+				join(agentDir, "settings.json"),
+				JSON.stringify({
+					defaultThinkingLevel: "medium",
+				}),
+			);
+
+			const manager = SettingsManager.create(projectDir, agentDir);
+			expect(manager.getDefaultThinkingLevel()).toBe("medium");
+		});
+	});
 });
